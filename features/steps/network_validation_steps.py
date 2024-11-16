@@ -1,65 +1,71 @@
-from behave import given, then
+import ipaddress
 import requests
 import socket
 import subprocess
-import ipaddress
+from behave import given, then
 
 
-# Step 1: Retrieve Public IP
-@given('I retrieve my public IP address')
-def step_impl(context):
+@given("I retrieve the public IP address")
+def step_retrieve_public_ip(context):
     try:
-        response = requests.get("https://ipinfo.io/ip")
+        response = requests.get("https://ipinfo.io/ip", timeout=5)
+        response.raise_for_status()
         context.public_ip = response.text.strip()
-    except Exception as e:
-        context.public_ip = None
-        print(f"Error retrieving public IP: {e}")
+    except requests.RequestException as e:
+        raise AssertionError(f"Failed to retrieve public IP: {str(e)}")
 
-# Step 2: Validate Public IP Range
-@then('My public IP should not fall within the range "{start_ip}" to "{end_ip}"')
-def step_impl(context, start_ip, end_ip):
-    if context.public_ip:
+
+@then('the IP should not be in range "{start_ip}" to "{end_ip}"')
+def step_validate_ip_range(context, start_ip, end_ip):
+    try:
         ip = ipaddress.ip_address(context.public_ip)
         start = ipaddress.ip_address(start_ip)
         end = ipaddress.ip_address(end_ip)
+
         if start <= ip <= end:
-            raise AssertionError(f"Public IP {context.public_ip} falls within the restricted range.")
-        else:
-            print(f"Public IP {context.public_ip} is outside the restricted range.")
-    else:
-        raise AssertionError("Failed to retrieve public IP.")
+            raise AssertionError(
+                f"Public IP {context.public_ip} falls within restricted range {start_ip} - {end_ip}"
+            )
+    except ValueError as e:
+        raise AssertionError(f"Invalid IP address format: {str(e)}")
 
-# Step 3: Verify Domain Resolution
+
 @given('I resolve the domain "{domain}"')
-def step_impl(context, domain):
+def step_resolve_domain(context, domain):
     try:
-        resolved_ip = socket.gethostbyname(domain)
-        context.resolved_ip = resolved_ip
-    except socket.gaierror:
-        context.resolved_ip = None
-        print(f"Error resolving domain: {domain}")
+        context.resolved_ip = socket.gethostbyname(domain)
+    except socket.gaierror as e:
+        raise AssertionError(f"Failed to resolve domain {domain}: {str(e)}")
 
-@then('The resolved IP address should be "{expected_ip}"')
-def step_impl(context, expected_ip):
+
+@then('the IP address should be "{expected_ip}"')
+def step_validate_resolved_ip(context, expected_ip):
     if context.resolved_ip != expected_ip:
-        raise AssertionError(f"Expected IP {expected_ip}, but got {context.resolved_ip}")
-    else:
-        print(f"Domain {context.resolved_ip} correctly resolves to {expected_ip}.")
+        raise AssertionError(
+            f"Domain resolved to {context.resolved_ip}, expected {expected_ip}"
+        )
 
-# Step 4: Perform Traceroute
-@given('I perform a traceroute to "{target_ip}"')
-def step_impl(context, target_ip):
+
+@given('I perform a traceroute to "{target}"')
+def step_perform_traceroute(context, target):
     try:
-        result = subprocess.run(['traceroute', target_ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output = result.stdout.decode()
-        context.hops = output.count("\n")
-    except Exception as e:
-        context.hops = None
-        print(f"Error performing traceroute: {e}")
+        if subprocess.getoutput("which traceroute") == "":
+            raise AssertionError("Traceroute command not found")
 
-@then('The traceroute should complete within {max_hops} hops')
-def step_impl(context, max_hops):
-    if context.hops and context.hops <= int(max_hops):
-        print(f"Traceroute completed in {context.hops} hops.")
-    else:
-        raise AssertionError(f"Traceroute exceeded {max_hops} hops, actual hops: {context.hops}")
+        cmd = ["traceroute", "-m", "10", "-n", target]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, error = process.communicate()
+
+        if process.returncode != 0:
+            raise AssertionError(f"Traceroute failed: {error.decode()}")
+
+        context.traceroute_output = output.decode().split("\n")
+
+    except subprocess.SubprocessError as e:
+        raise AssertionError(f"Traceroute execution failed: {str(e)}")
+
+
+@then("the target should be reached within {max_hops:d} hops")
+def step_validate_traceroute_hops(context, max_hops):
+    if not context.traceroute_output or len(context.traceroute_output) > max_hops:
+        raise AssertionError(f"Target not reached within {max_hops} hops")
