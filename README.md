@@ -17,7 +17,7 @@ Follow these steps to set up the project and run the tests:
 Clone the project repository to your local machine:
 
 ```bash
-git clone https://github.com/MaksimLiV/networking-validation
+git clone https://github.com/MaksimLiV/networking-validation.git
 cd networking-validation
 ```
 
