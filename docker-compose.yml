@@ -1,0 +1,13 @@
+version: '3.12'
+services:
+  network-tests:
+    build: .
+    networks:
+      - test-network
+    volumes:
+      - ./reports:/app/reports
+    command: behave --format pretty --outfile /app/reports/test_results.txt
+
+networks:
+  test-network:
+    driver: bridge
