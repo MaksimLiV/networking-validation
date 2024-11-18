@@ -4,7 +4,7 @@ This project automates networking validation tests using Behave and Docker. The 
 
 ## Requirements
 
-- Python 3.x
+- Python 3.12
 - Docker (for running the tests in a containerized environment)
 - Git
 - `pip` (for managing dependencies)
