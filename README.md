@@ -57,7 +57,6 @@ The project uses Docker to run the tests in a containerized environment. The fol
 Notes
 
 	•	Make sure Docker is installed on your machine to run the tests in a containerized environment.
-	•	If you encounter issues with the tests, ensure that the .env file is properly set up with the required API endpoints.
 
 
 ### Steps to run the project:
