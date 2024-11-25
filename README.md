@@ -52,7 +52,7 @@ The project uses Docker to run the tests in a containerized environment. The fol
 
 •	docker-compose.yml: Defines the service and environment for running the tests with Docker Compose.
 
-•	run-tests.sh: A script that checks prerequisites (Docker, .env file, etc.) and runs the tests using Docker.
+•	run-tests.sh: A script that checks prerequisites and runs the tests using Docker.
 
 Notes
 
@@ -61,5 +61,4 @@ Notes
 
 ### Steps to run the project:
 1. **Clone the repository.**
-2.	**Insert the required environment variables into the .env file.**
-3.	**Run the tests using the run-tests.sh script after setting execute permissions.**
+2.	**Run the tests using the run-tests.sh script.**
