@@ -2,15 +2,15 @@ import ipaddress
 import requests
 import socket
 import subprocess
+import platform
 from behave import given, then
-
 
 @given("I retrieve the public IP address")
 def step_retrieve_public_ip(context):
     try:
         response = requests.get("https://ipinfo.io/ip", timeout=5)
         response.raise_for_status()
-        context.public_ip = response.text.strip()
+        context.public_ip = response.text.strip() 
     except requests.RequestException as e:
         raise AssertionError(f"Failed to retrieve public IP: {str(e)}")
 
@@ -49,17 +49,20 @@ def step_validate_resolved_ip(context, expected_ip):
 @given('I perform a traceroute to "{target}"')
 def step_perform_traceroute(context, target):
     try:
-        if subprocess.getoutput("which traceroute") == "":
-            raise AssertionError("Traceroute command not found")
+        # Определяем команду в зависимости от операционной системы
+        os_system = platform.system().lower()
+        
+        if os_system == "windows":
+            cmd = ["tracert", "-h", "10", target]
+        else:  # для macOS, Linux и других Unix-подобных систем
+            cmd = ["traceroute", "-m", "10", "-n", target]
 
-        cmd = ["traceroute", "-m", "10", "-n", target]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         output, error = process.communicate()
 
         if process.returncode != 0:
-            raise AssertionError(f"Traceroute failed: {error.decode()}")
-
-        context.traceroute_output = output.decode().split("\n")
+            raise AssertionError(f"Traceroute failed: {error}")
+        context.traceroute_output = output.split("\n")
 
     except subprocess.SubprocessError as e:
         raise AssertionError(f"Traceroute execution failed: {str(e)}")
