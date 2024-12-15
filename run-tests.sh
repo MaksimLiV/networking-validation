@@ -3,6 +3,18 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+if ! command -v docker &> /dev/null; then
+    echo "Error: Docker is not installed!"
+    echo "Please install Docker Desktop for Mac first."
+    exit 1
+fi
+
+if ! docker info &> /dev/null; then
+    echo "Error: Docker is not running!"
+    echo "Please start Docker Desktop for Mac."
+    exit 1
+fi
+
 log() {
     echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
 }
