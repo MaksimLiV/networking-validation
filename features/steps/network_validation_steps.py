@@ -49,12 +49,11 @@ def step_validate_resolved_ip(context, expected_ip):
 @given('I perform a traceroute to "{target}"')
 def step_perform_traceroute(context, target):
     try:
-        # Определяем команду в зависимости от операционной системы
         os_system = platform.system().lower()
-        
+
         if os_system == "windows":
             cmd = ["tracert", "-h", "10", target]
-        else:  # для macOS, Linux и других Unix-подобных систем
+        else: 
             cmd = ["traceroute", "-m", "10", "-n", target]
 
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
